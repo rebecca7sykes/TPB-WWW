@@ -1,0 +1,8 @@
+<?php $int = 0; ?>
+<?php
+$b    = 43;
+for($a=1;$a<=$b;$a++) 
+  {
+    echo "<option value=\"" . $a . "aug\">" . $a . "</option>\n";
+  }
+?>

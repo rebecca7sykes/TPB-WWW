@@ -1,0 +1,690 @@
+<html>
+<head>
+<style type="text/css">
+<!--body{ margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; background-color: #FFFFFF}
+.toolbar { width: 20px; font: 12px Helvetica, Arial, sans-serif; color: #000000; margin-top: -1px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px}
+img { border: 0}
+A:link {text-decoration: none; color: #3300FF}
+A:visited {text-decoration: none; color: #CC00FF}
+A:active {text-decoration: #FF0000}
+A:hover {text-decoration: underline; color:#FF0000}
+-->
+</style>
+<script language="javascript"> 
+<!-- hide
+function killerrors() {
+return true;
+}
+window.onerror = killerrors;
+// -->
+</script>
+
+<!-- Infrastructure code for the tree -->
+<script>
+
+function MyGotoPage(newPage)
+{
+	parent.ltop.gotopage(newPage);
+}
+function Folder(folderDescription, hreference)
+{
+  this.desc = folderDescription
+  this.hreference = hreference 
+  this.id = -1   
+  this.navObj = 0  
+  this.iconImg = 0  
+  this.nodeImg = 0  
+  this.isLastNode = 0 
+ 
+  this.isOpen = true 
+  this.iconSrc = "images/pg_bopen.gif"
+  this.children = new Array 
+  this.nChildren = 0 
+ 
+  this.initialize = initializeFolder 
+  this.setState = setStateFolder 
+  this.addChild = addChild 
+  this.createIndex = createEntryIndex 
+  this.hide = hideFolder 
+  this.display = display 
+  this.renderOb = drawFolder 
+  this.totalHeight = totalHeight 
+  this.subEntries = folderSubEntries 
+  this.outputLink = outputFolderLink 
+} 
+ 
+function setStateFolder(isOpen) 
+{ 
+  var subEntries 
+  var totalHeight 
+  var fIt = 0 
+  var i=0 
+ 
+  if (isOpen == this.isOpen) 
+    return 
+ 
+  if (browserVersion == 2)  
+  { 
+    totalHeight = 0 
+    for (i=0; i < this.nChildren; i++) 
+      totalHeight = totalHeight + this.children[i].navObj.clip.height 
+      subEntries = this.subEntries() 
+    if (this.isOpen) 
+      totalHeight = 0 - totalHeight 
+    for (fIt = this.id + subEntries + 1; fIt < nEntries; fIt++) 
+      indexOfEntries[fIt].navObj.moveBy(0, totalHeight) 
+  }  
+  this.isOpen = isOpen 
+  propagateChangesInState(this) 
+} 
+ 
+function propagateChangesInState(folder) 
+{   
+  var i=0 
+ 
+  if (folder.isOpen) 
+  { 
+    if (folder.nodeImg) 
+      if (folder.isLastNode) 
+        folder.nodeImg.src = "images/pg_bmlastnode.gif" 
+      else 
+	  folder.nodeImg.src = "images/pg_bmnode.gif" 
+    folder.iconImg.src = "images/pg_bopen.gif" 
+    for (i=0; i<folder.nChildren; i++) 
+      folder.children[i].display() 
+  } 
+  else 
+  { 
+    if (folder.nodeImg) 
+      if (folder.isLastNode) 
+        folder.nodeImg.src = "images/pg_bplastnode.gif" 
+      else 
+	  folder.nodeImg.src = "images/pg_bpnode.gif" 
+    folder.iconImg.src = "images/pg_bclosed.gif" 
+    for (i=0; i<folder.nChildren; i++) 
+      folder.children[i].hide() 
+  }  
+} 
+ 
+function hideFolder() 
+{ 
+  if (browserVersion == 1) { 
+    if (this.navObj.style.display == "none") 
+      return 
+    this.navObj.style.display = "none" 
+  } else { 
+    if (this.navObj.visibility == "hiden") 
+      return 
+    this.navObj.visibility = "hiden" 
+  } 
+   
+  this.setState(0) 
+} 
+ 
+function initializeFolder(level, lastNode, leftSide) 
+{ 
+var j=0 
+var i=0 
+var numberOfFolders 
+var numberOfDocs 
+var nc 
+      
+  nc = this.nChildren 
+   
+  this.createIndex() 
+ 
+  var auxEv = "" 
+ 
+  if (browserVersion > 0) 
+    auxEv = "<a href='javascript:clickOnNode("+this.id+")'>" 
+  else 
+    auxEv = "<a>" 
+ 
+  if (level>0) 
+    if (lastNode) 
+    { 
+      this.renderOb(leftSide + auxEv + "<img name='nodeIcon" + this.id + "' src='images/pg_bmlastnode.gif' width=16 height=22 border=0></a>") 
+      leftSide = leftSide + "<img src='images/pg_bblank.gif' width=16 height=22>"  
+      this.isLastNode = 1 
+    } 
+    else 
+    { 
+      this.renderOb(leftSide + auxEv + "<img name='nodeIcon" + this.id + "' src='images/pg_bmnode.gif' width=16 height=22 border=0></a>") 
+      leftSide = leftSide + "<img src='images/pg_bvertline.gif' width=16 height=22>" 
+      this.isLastNode = 0 
+    } 
+  else 
+    this.renderOb("") 
+   
+  if (nc > 0) 
+  { 
+    level = level + 1 
+    for (i=0 ; i < this.nChildren; i++)  
+    { 
+      if (i == this.nChildren-1) 
+        this.children[i].initialize(level, 1, leftSide) 
+      else 
+        this.children[i].initialize(level, 0, leftSide) 
+      } 
+  } 
+} 
+ 
+function drawFolder(leftSide) 
+{ 
+  if (browserVersion == 2) { 
+    if (!doc.yPos) 
+      doc.yPos=8 
+    doc.write("<layer id='folder" + this.id + "' top=" + doc.yPos + " visibility=hiden>") 
+  } 
+   
+  doc.write("<table class='toolbar' ") 
+  if (browserVersion == 1) 
+    doc.write(" id='folder" + this.id + "' style='position:block;' ") 
+  doc.write(" border=0 cellspacing=0 cellpadding=0>") 
+  doc.write("<tr><td>") 
+  doc.write(leftSide) 
+this.outputLink() 
+  doc.write("<img name='folderIcon" + this.id + "' ") 
+  doc.write("src='" + this.iconSrc+"' border=0></a>") 
+  doc.write("</td><td valign=middle nowrap>") 
+  if (USETEXTLINKS) 
+  { 
+    this.outputLink() 
+    doc.write(this.desc + "</a>") 
+  } 
+  else 
+    doc.write(this.desc) 
+  doc.write("</td>")  
+  doc.write("</table>") 
+   
+  if (browserVersion == 2) { 
+    doc.write("</layer>") 
+  } 
+ 
+  if (browserVersion == 1) { 
+    this.navObj = doc.all["folder"+this.id] 
+    this.iconImg = doc.all["folderIcon"+this.id] 
+    this.nodeImg = doc.all["nodeIcon"+this.id] 
+  } else if (browserVersion == 2) { 
+    this.navObj = doc.layers["folder"+this.id] 
+    this.iconImg = this.navObj.document.images["folderIcon"+this.id] 
+    this.nodeImg = this.navObj.document.images["nodeIcon"+this.id] 
+    doc.yPos=doc.yPos+this.navObj.clip.height 
+  } 
+} 
+ 
+function outputFolderLink() 
+{ 
+  if (this.hreference) 
+  { 
+    doc.write("<a href='#' onClick='javascript:MyGotoPage(" + this.hreference + "); return false'") 
+    if (browserVersion > 0) 
+      doc.write("onClick='javascript:clickOnFolder("+this.id+")'") 
+    doc.write(">") 
+  } 
+  else 
+    doc.write("<a>") 
+} 
+ 
+function addChild(childNode) 
+{ 
+  this.children[this.nChildren] = childNode 
+  this.nChildren++ 
+  return childNode 
+} 
+ 
+function folderSubEntries() 
+{ 
+  var i = 0 
+  var se = this.nChildren 
+ 
+  for (i=0; i < this.nChildren; i++){ 
+    if (this.children[i].children) 
+      se = se + this.children[i].subEntries() 
+  } 
+ 
+  return se 
+} 
+ 
+function Item(itemDescription, itemLink)  
+{ 
+  this.desc = itemDescription 
+  this.link = itemLink 
+  this.id = -1 
+  this.navObj = 0 
+  this.iconImg = 0 
+  this.iconSrc = "images/pg_bdoc.gif" 
+ 
+  this.initialize = initializeItem 
+  this.createIndex = createEntryIndex 
+  this.hide = hideItem 
+  this.display = display 
+  this.renderOb = drawItem 
+  this.totalHeight = totalHeight 
+} 
+ 
+function hideItem() 
+{ 
+  if (browserVersion == 1) { 
+    if (this.navObj.style.display == "none") 
+      return 
+    this.navObj.style.display = "none" 
+  } else { 
+    if (this.navObj.visibility == "hiden") 
+      return 
+    this.navObj.visibility = "hiden" 
+  }     
+} 
+ 
+function initializeItem(level, lastNode, leftSide) 
+{  
+  this.createIndex() 
+ 
+  if (level>0) 
+    if (lastNode) 
+    { 
+      this.renderOb(leftSide + "<img src='images/pg_blastnode.gif' width=16 height=22>") 
+      leftSide = leftSide + "<img src='images/pg_bblank.gif' width=16 height=22>"  
+    } 
+    else 
+    { 
+      this.renderOb(leftSide + "<img src='images/pg_bnode.gif' width=16 height=22>") 
+      leftSide = leftSide + "<img src='images/pg_bvertline.gif' width=16 height=22>" 
+    } 
+  else 
+    this.renderOb("")   
+} 
+ 
+function drawItem(leftSide) 
+{ 
+  if (browserVersion == 2) 
+    doc.write("<layer id='item" + this.id + "' top=" + doc.yPos + " visibility=hiden>") 
+     
+  doc.write("<table class='toolbar' ") 
+  if (browserVersion == 1) 
+    doc.write(" id='item" + this.id + "' style='position:block;' ") 
+  doc.write(" border=0 cellspacing=0 cellpadding=0>") 
+  doc.write("<tr><td>") 
+  doc.write(leftSide) 
+  doc.write("<a href=" + this.link + ">") 
+  doc.write("<img id='itemIcon"+this.id+"' ") 
+  doc.write("src='"+this.iconSrc+"' border=0>") 
+doc.write("</a>") 
+  doc.write("</td><td valign=middle nowrap>") 
+  if (USETEXTLINKS) 
+    doc.write("<a href=" + this.link + ">" + this.desc + "</a>") 
+  else 
+    doc.write(this.desc) 
+  doc.write("</table>") 
+   
+  if (browserVersion == 2) 
+    doc.write("</layer>") 
+ 
+  if (browserVersion == 1) { 
+    this.navObj = doc.all["item"+this.id] 
+    this.iconImg = doc.all["itemIcon"+this.id] 
+  } else if (browserVersion == 2) { 
+    this.navObj = doc.layers["item"+this.id] 
+    this.iconImg = this.navObj.document.images["itemIcon"+this.id] 
+    doc.yPos=doc.yPos+this.navObj.clip.height 
+  } 
+} 
+ 
+ 
+function display() 
+{ 
+  if (browserVersion == 1) 
+    this.navObj.style.display = "block" 
+  else 
+    this.navObj.visibility = "show" 
+} 
+ 
+function createEntryIndex() 
+{ 
+  this.id = nEntries 
+  indexOfEntries[nEntries] = this 
+  nEntries++ 
+} 
+
+function totalHeight()
+{ 
+  var h = this.navObj.clip.height 
+  var i = 0 
+   
+  if (this.isOpen) 
+    for (i=0 ; i < this.nChildren; i++)  
+      h = h + this.children[i].totalHeight() 
+ 
+  return h 
+} 
+
+function clickOnFolder(folderId) 
+	{ 
+		var clicked = indexOfEntries[folderId] 
+ 
+  if (!clicked.isOpen) 
+    clickOnNode(folderId) 
+ 
+  return  
+ 
+  if (clicked.isSelected) 
+    return 
+} 
+
+function clickOnNode(folderId) 
+{ 
+  var clickedFolder = 0 
+  var state = 0 
+ 
+  clickedFolder = indexOfEntries[folderId] 
+  state = clickedFolder.isOpen 
+ 
+  clickedFolder.setState(!state) 
+}
+
+function initializeDocument()
+{ 
+  if (doc.all) 
+    browserVersion = 1 
+  else 
+    if (doc.layers) 
+      browserVersion = 2 
+    else 
+      browserVersion = 0 
+ 
+  root0.initialize(0, 1, "") 
+  root0.display()
+  
+  if (browserVersion > 0) 
+  { 
+    doc.write("<layer top="+indexOfEntries[nEntries-1].navObj.top+">&nbsp;</layer>")
+ 
+ 
+    clickOnNode(0) 
+
+    clickOnNode(0) 
+  } 
+} 
+ 
+ function gFld(description, hreference) 
+{ 
+  folder = new Folder(description, hreference) 
+  return folder 
+} 
+
+function gLnk(target, description, linkData) 
+{ 
+  fullLink = "" 
+ 
+  if (target==0) 
+  { 
+    fullLink = "'"+linkData+"' target=\"basefrm\"" 
+  } 
+  else 
+  { 
+	fullLink = "'#' onClick='javascript:MyGotoPage(" + linkData + "); return false'"
+  } 
+  linkItem = new Item(description, fullLink)   
+  return linkItem 
+} 
+
+function insFld(parentFolder, childFolder) 
+{ 
+  return parentFolder.addChild(childFolder) 
+} 
+ 
+function insDoc(parentFolder, document) 
+{ 
+  parentFolder.addChild(document) 
+} 
+ 
+USETEXTLINKS = 1
+indexOfEntries = new Array 
+nEntries = 0 
+doc = document 
+browserVersion = 0 
+selectedFolder=0
+
+</script>
+<script>
+root0 = gFld("Mathematics Standard", "")
+root1 = insFld(root0, gFld("MathematicsStandard2008", "1"))
+insDoc(root1, gLnk(2,"math cover", "1"))
+root2 = insFld(root1, gFld("Ackowledgments", "2"))
+insDoc(root2, gLnk(2,"State Board of Education", "2"))
+insDoc(root2, gLnk(2,"Tom Horne", "3"))
+root3 = insFld(root2, gFld("Superintendent of Public Instruction", "3"))
+root4 = insFld(root3, gFld("Margaret Garcia Dugan", "3"))
+root5 = insFld(root4, gFld("Deputy Superintendent of Public Instruction", "3"))
+insDoc(root5, gLnk(2,"Cheryl J. Lebo ", "3"))
+root3 = insFld(root2, gFld("Associate Superintendent for Standards and Assessment", "3"))
+insDoc(root3, gLnk(2,"Facilitating Staff Members ", "3"))
+insDoc(root2, gLnk(2,"Marilee Beach", "3"))
+root3 = insFld(root2, gFld("Education Program Specialist", "3"))
+insDoc(root3, gLnk(2,"Education Program Specialist", "3"))
+insDoc(root3, gLnk(2,"Education Program Specialist", "3"))
+insDoc(root2, gLnk(2,"Education Program Specialist", "3"))
+root3 = insFld(root2, gFld("Lacey Wieser  ", "3"))
+root4 = insFld(root3, gFld("Christie McDougall", "3"))
+insDoc(root4, gLnk(2,"Education Program Specialist", "3"))
+insDoc(root4, gLnk(2,"Education Program Specialist", "3"))
+root4 = insFld(root3, gFld("Melissa Stinson-Borg", "3"))
+insDoc(root4, gLnk(2,"Program Project Specialist I", "3"))
+insDoc(root3, gLnk(2,"Angeles Rothermel", "3"))
+root4 = insFld(root3, gFld("Administrative Assistant III", "3"))
+insDoc(root4, gLnk(2,"Administrative Assistant III", "3"))
+root5 = insFld(root4, gFld("Administrative Assistant III", "3"))
+insDoc(root5, gLnk(2,"MATHEMATICS TEAM", "1"))
+insDoc(root4, gLnk(2,"State Representation", "1"))
+insDoc(root4, gLnk(2,"Teachers who worked on the revision and articulation of the Mathematics Standard represented the schools, districts, and organizations listed below. The goal was to have representation from large and small districts, urban and rural schools, and geographic and ethnic diversity.", "1"))
+insDoc(root4, gLnk(2,"External Reviewers/Consultants", "1"))
+root2 = insFld(root1, gFld("Introduction", "1"))
+insDoc(root2, gLnk(2,"INTRODUCTION", "1"))
+insDoc(root2, gLnk(2,"BACKGROUND", "1"))
+insDoc(root2, gLnk(2,"RATIONALE", "1"))
+insDoc(root2, gLnk(2,"METHODOLOGY", "1"))
+insDoc(root2, gLnk(2,"After all the public comments were collected, organized, and categorized by grade level and topic, the revision teams met to determine what modifications to the standard document would be appropriate. Upon completion of the revision work, crosswalks were created to assist educators with the transition from the 2003 Arizona Mathematics Standard Articulated by Grade Level to the revised 2008 Mathematics Standard.", "1"))
+root3 = insFld(root2, gFld("ORGANIZATION OF THE                                MATHEMATICS STANDARD", "1"))
+insDoc(root3, gLnk(2,"Strand One:  Number and Operations", "1"))
+insDoc(root3, gLnk(2,"Concept 2:  Numerical Operations", "1"))
+insDoc(root3, gLnk(2,"Concept 3:  Estimation", "1"))
+insDoc(root3, gLnk(2,"Strand 2:  Data Analysis, Probability, and Discrete Mathematics ", "1"))
+insDoc(root3, gLnk(2,"Concept 1:  Data Analysis (Statistics)", "1"))
+insDoc(root3, gLnk(2,"Concept 2: Probability", "1"))
+insDoc(root3, gLnk(2,"Concept 3: Systematic Listing and Counting", "1"))
+insDoc(root3, gLnk(2,"Concept 4: Vertex-Edge Graphs", "1"))
+insDoc(root3, gLnk(2,"Understand and apply the concepts of vertex-edge graphs and networks. This field connects graph theory with practical problems. ", "1"))
+insDoc(root3, gLnk(2,"Strand 3:  Patterns, Algebra, and Functions", "1"))
+insDoc(root3, gLnk(2,"Concept 1: Patterns", "1"))
+insDoc(root3, gLnk(2,"Identify patterns and apply pattern recognition to reason mathematically. Students begin with simple repetitive patterns of many iterations. This is the beginning of recursive thinking. Later, students can study sequences that can best be defined using recursion.", "1"))
+insDoc(root3, gLnk(2,"Concept 2:  Functions & Relationships", "1"))
+insDoc(root3, gLnk(2,"Concept 3:  Algebraic Representations", "1"))
+insDoc(root3, gLnk(2,"Concept 4:  Analysis of Change", "1"))
+insDoc(root3, gLnk(2,"Strand 4:  Geometry and Measurement", "1"))
+insDoc(root3, gLnk(2,"Concept 1:  Geometric Properties", "1"))
+insDoc(root3, gLnk(2,"Concept 2:  Transformation of Shapes", "1"))
+insDoc(root3, gLnk(2,"Concept 3:  Coordinate Geometry", "1"))
+insDoc(root3, gLnk(2,"Concept 4:  Measurement ", "1"))
+insDoc(root3, gLnk(2,"Strand 5:  Structure and Logic", "1"))
+insDoc(root3, gLnk(2,"Concept 1:  Algorithms and Algorithmic Thinking", "1"))
+insDoc(root3, gLnk(2,"Concept 2:  Logic, Reasoning, Problem Solving, and Proof", "1"))
+root2 = insFld(root1, gFld("Outline", "1"))
+insDoc(root2, gLnk(2,"Strand 1: Number and Operations", "1"))
+root3 = insFld(root2, gFld("Strand 2: Data Analysis, Probability, and Discrete Mathematics", "1"))
+insDoc(root3, gLnk(2,"Strand 3: Patterns, Algebra, and Functions", "1"))
+root3 = insFld(root2, gFld("Strand 4: Geometry and Measurement", "1"))
+root4 = insFld(root3, gFld("Strand 5:  Structure and Logic", "1"))
+insDoc(root4, gLnk(2,"Concept 1: Algorithms and   The concept of using reasoning to solve mathematical problems.             Algorithmic Thinking", "1"))
+root3 = insFld(root2, gFld("Coding for Articulated Standards", "1"))
+insDoc(root3, gLnk(2,"                                                                   M00-S1C2-02", "1"))
+insDoc(root1, gLnk(2,"changedMathGradesK-6bystrand", "1"))
+insDoc(root1, gLnk(2,"changedMathGrades7-12bystrand", "1"))
+root2 = insFld(root1, gFld("Glossary", "1"))
+insDoc(root2, gLnk(2,"algebraic expression", "1"))
+insDoc(root2, gLnk(2,"algebraic form/notation", "1"))
+insDoc(root2, gLnk(2,"angle ", "1"))
+insDoc(root2, gLnk(2,"a geometric figure consisting of the union of two rays that share a common endpoint (vertex)", "1"))
+insDoc(root2, gLnk(2,"area", "1"))
+insDoc(root2, gLnk(2,"a two dimensional space measured by the number of non-overlapping unit squares or parts of unit squares that can fit into the space", "1"))
+insDoc(root2, gLnk(2,"bias", "1"))
+insDoc(root2, gLnk(2,"cube", "1"))
+insDoc(root2, gLnk(2,"exponents: the third power of a number", "1"))
+insDoc(root2, gLnk(2,"cube root", "1"))
+insDoc(root2, gLnk(2,"one of only three equal factors of a given number (e.g., the cube root of 27 is 3, 3 x 3 x 3 = 27", "1"))
+insDoc(root2, gLnk(2,"cubic function", "1"))
+insDoc(root2, gLnk(2,"a rule containing the cube of a variable (e.g., f(x)=x3)", "1"))
+insDoc(root2, gLnk(2,"digit  ", "1"))
+insDoc(root2, gLnk(2,"the ten symbols, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, used in a base ten numeration system", "1"))
+insDoc(root2, gLnk(2,"equivalent  ", "1"))
+root3 = insFld(root2, gFld("two expressions or statements that always have the same truth value", "1"))
+insDoc(root3, gLnk(2,"scale factor", "1"))
+root2 = insFld(root1, gFld("MathematicsStandard2008.pdf", "1"))
+insDoc(root2, gLnk(2,"math cover", "1"))
+root3 = insFld(root2, gFld("Ackowledgments", "1"))
+insDoc(root3, gLnk(2,"State Board of Education", "1"))
+insDoc(root3, gLnk(2,"Tom Horne", "1"))
+root4 = insFld(root3, gFld("Superintendent of Public Instruction", "1"))
+root5 = insFld(root4, gFld("Margaret Garcia Dugan", "1"))
+root6 = insFld(root5, gFld("Deputy Superintendent of Public Instruction", "1"))
+insDoc(root6, gLnk(2,"Cheryl J. Lebo ", "1"))
+root4 = insFld(root3, gFld("Associate Superintendent for Standards and Assessment", "1"))
+insDoc(root4, gLnk(2,"Facilitating Staff Members ", "1"))
+insDoc(root3, gLnk(2,"Marilee Beach", "1"))
+root4 = insFld(root3, gFld("Education Program Specialist", "1"))
+insDoc(root4, gLnk(2,"Education Program Specialist", "1"))
+insDoc(root4, gLnk(2,"Education Program Specialist", "1"))
+insDoc(root3, gLnk(2,"Education Program Specialist", "1"))
+root4 = insFld(root3, gFld("Lacey Wieser  ", "1"))
+root5 = insFld(root4, gFld("Christie McDougall", "1"))
+insDoc(root5, gLnk(2,"Education Program Specialist", "1"))
+insDoc(root5, gLnk(2,"Education Program Specialist", "1"))
+root5 = insFld(root4, gFld("Melissa Stinson-Borg", "1"))
+insDoc(root5, gLnk(2,"Program Project Specialist I", "1"))
+insDoc(root4, gLnk(2,"Angeles Rothermel", "1"))
+root5 = insFld(root4, gFld("Administrative Assistant III", "1"))
+insDoc(root5, gLnk(2,"Administrative Assistant III", "1"))
+root6 = insFld(root5, gFld("Administrative Assistant III", "1"))
+insDoc(root6, gLnk(2,"MATHEMATICS TEAM", "1"))
+insDoc(root5, gLnk(2,"State Representation", "0"))
+insDoc(root5, gLnk(2,"Teachers who worked on the revision and articulation of the Mathematics Standard represented the schools, districts, and organizations listed below. The goal was to have representation from large and small districts, urban and rural schools, and geographic and ethnic diversity.", "0"))
+insDoc(root5, gLnk(2,"External Reviewers/Consultants", "0"))
+root3 = insFld(root2, gFld("Introduction", "7"))
+insDoc(root3, gLnk(2,"INTRODUCTION", "7"))
+insDoc(root3, gLnk(2,"BACKGROUND", "7"))
+insDoc(root3, gLnk(2,"RATIONALE", "7"))
+insDoc(root3, gLnk(2,"METHODOLOGY", "8"))
+insDoc(root3, gLnk(2,"After all the public comments were collected, organized, and categorized by grade level and topic, the revision teams met to determine what modifications to the standard document would be appropriate. Upon completion of the revision work, crosswalks were created to assist educators with the transition from the 2003 Arizona Mathematics Standard Articulated by Grade Level to the revised 2008 Mathematics Standard.", "8"))
+root4 = insFld(root3, gFld("ORGANIZATION OF THE                                MATHEMATICS STANDARD", "9"))
+insDoc(root4, gLnk(2,"Strand One:  Number and Operations", "10"))
+insDoc(root4, gLnk(2,"Concept 2:  Numerical Operations", "10"))
+insDoc(root4, gLnk(2,"Concept 3:  Estimation", "10"))
+insDoc(root4, gLnk(2,"Strand 2:  Data Analysis, Probability, and Discrete Mathematics ", "10"))
+insDoc(root4, gLnk(2,"Concept 1:  Data Analysis (Statistics)", "11"))
+insDoc(root4, gLnk(2,"Concept 2: Probability", "11"))
+insDoc(root4, gLnk(2,"Concept 3: Systematic Listing and Counting", "11"))
+insDoc(root4, gLnk(2,"Concept 4: Vertex-Edge Graphs", "11"))
+insDoc(root4, gLnk(2,"Understand and apply the concepts of vertex-edge graphs and networks. This field connects graph theory with practical problems. ", "11"))
+insDoc(root4, gLnk(2,"Strand 3:  Patterns, Algebra, and Functions", "11"))
+insDoc(root4, gLnk(2,"Concept 1: Patterns", "11"))
+insDoc(root4, gLnk(2,"Identify patterns and apply pattern recognition to reason mathematically. Students begin with simple repetitive patterns of many iterations. This is the beginning of recursive thinking. Later, students can study sequences that can best be defined using recursion.", "11"))
+insDoc(root4, gLnk(2,"Concept 2:  Functions & Relationships", "11"))
+insDoc(root4, gLnk(2,"Concept 3:  Algebraic Representations", "11"))
+insDoc(root4, gLnk(2,"Concept 4:  Analysis of Change", "11"))
+insDoc(root4, gLnk(2,"Strand 4:  Geometry and Measurement", "12"))
+insDoc(root4, gLnk(2,"Concept 1:  Geometric Properties", "12"))
+insDoc(root4, gLnk(2,"Concept 2:  Transformation of Shapes", "12"))
+insDoc(root4, gLnk(2,"Concept 3:  Coordinate Geometry", "12"))
+insDoc(root4, gLnk(2,"Concept 4:  Measurement ", "12"))
+insDoc(root4, gLnk(2,"Strand 5:  Structure and Logic", "12"))
+insDoc(root4, gLnk(2,"Concept 1:  Algorithms and Algorithmic Thinking", "12"))
+insDoc(root4, gLnk(2,"Concept 2:  Logic, Reasoning, Problem Solving, and Proof", "13"))
+root3 = insFld(root2, gFld("Outline", "14"))
+insDoc(root3, gLnk(2,"Strand 1: Number and Operations", "14"))
+root4 = insFld(root3, gFld("Strand 2: Data Analysis, Probability, and Discrete Mathematics", "14"))
+insDoc(root4, gLnk(2,"Strand 3: Patterns, Algebra, and Functions", "15"))
+root4 = insFld(root3, gFld("Strand 4: Geometry and Measurement", "15"))
+root5 = insFld(root4, gFld("Strand 5:  Structure and Logic", "16"))
+insDoc(root5, gLnk(2,"Concept 1: Algorithms and   The concept of using reasoning to solve mathematical problems.             Algorithmic Thinking", "16"))
+root4 = insFld(root3, gFld("Coding for Articulated Standards", "17"))
+insDoc(root4, gLnk(2,"                                                                   M00-S1C2-02", "17"))
+insDoc(root2, gLnk(2,"changedMathGradesK-6bystrand", "18"))
+insDoc(root2, gLnk(2,"changedMathGrades7-12bystrand", "44"))
+root3 = insFld(root2, gFld("Glossary", "71"))
+insDoc(root3, gLnk(2,"algebraic expression", "72"))
+insDoc(root3, gLnk(2,"algebraic form/notation", "72"))
+insDoc(root3, gLnk(2,"angle ", "72"))
+insDoc(root3, gLnk(2,"a geometric figure consisting of the union of two rays that share a common endpoint (vertex)", "72"))
+insDoc(root3, gLnk(2,"area", "73"))
+insDoc(root3, gLnk(2,"a two dimensional space measured by the number of non-overlapping unit squares or parts of unit squares that can fit into the space", "73"))
+insDoc(root3, gLnk(2,"bias", "74"))
+insDoc(root3, gLnk(2,"cube", "78"))
+insDoc(root3, gLnk(2,"exponents: the third power of a number", "78"))
+insDoc(root3, gLnk(2,"cube root", "78"))
+insDoc(root3, gLnk(2,"one of only three equal factors of a given number (e.g., the cube root of 27 is 3, 3 x 3 x 3 = 27", "78"))
+insDoc(root3, gLnk(2,"cubic function", "78"))
+insDoc(root3, gLnk(2,"a rule containing the cube of a variable (e.g., f(x)=x3)", "78"))
+insDoc(root3, gLnk(2,"digit  ", "79"))
+insDoc(root3, gLnk(2,"the ten symbols, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, used in a base ten numeration system", "79"))
+insDoc(root3, gLnk(2,"equivalent  ", "81"))
+root4 = insFld(root3, gFld("two expressions or statements that always have the same truth value", "81"))
+insDoc(root4, gLnk(2,"scale factor", "95"))
+root1 = insFld(root0, gFld("Ackowledgments", "0"))
+insDoc(root1, gLnk(2,"State Board of Education", "1"))
+insDoc(root1, gLnk(2,"Tom Horne", "1"))
+root2 = insFld(root1, gFld("Superintendent of Public Instruction", "1"))
+root3 = insFld(root2, gFld("Margaret Garcia Dugan", "1"))
+root4 = insFld(root3, gFld("Deputy Superintendent of Public Instruction", "1"))
+insDoc(root4, gLnk(2,"Cheryl J. Lebo ", "1"))
+root2 = insFld(root1, gFld("Associate Superintendent for Standards and Assessment", "1"))
+insDoc(root2, gLnk(2,"Facilitating Staff Members ", "1"))
+insDoc(root1, gLnk(2,"Marilee Beach", "1"))
+root2 = insFld(root1, gFld("Education Program Specialist", "1"))
+insDoc(root2, gLnk(2,"Education Program Specialist", "1"))
+insDoc(root2, gLnk(2,"Education Program Specialist", "1"))
+insDoc(root1, gLnk(2,"Education Program Specialist", "1"))
+root2 = insFld(root1, gFld("Lacey Wieser  ", "1"))
+root3 = insFld(root2, gFld("Christie McDougall", "1"))
+insDoc(root3, gLnk(2,"Education Program Specialist", "1"))
+insDoc(root3, gLnk(2,"Education Program Specialist", "1"))
+root3 = insFld(root2, gFld("Melissa Stinson-Borg", "1"))
+insDoc(root3, gLnk(2,"Program Project Specialist I", "1"))
+insDoc(root2, gLnk(2,"Angeles Rothermel", "1"))
+root3 = insFld(root2, gFld("Administrative Assistant III", "1"))
+insDoc(root3, gLnk(2,"Administrative Assistant III", "1"))
+root4 = insFld(root3, gFld("Administrative Assistant III", "1"))
+insDoc(root4, gLnk(2,"MATHEMATICS TEAM", "0"))
+insDoc(root3, gLnk(2,"State Representation", "1"))
+insDoc(root3, gLnk(2,"Teachers who worked on the revision and articulation of the Mathematics Standard represented the schools, districts, and organizations listed below. The goal was to have representation from large and small districts, urban and rural schools, and geographic and ethnic diversity.", "1"))
+insDoc(root3, gLnk(2,"External Reviewers/Consultants", "1"))
+root1 = insFld(root0, gFld("Ackowledgments.pdf", "0"))
+insDoc(root1, gLnk(2,"State Board of Education", "0"))
+insDoc(root1, gLnk(2,"Tom Horne", "0"))
+root2 = insFld(root1, gFld("Superintendent of Public Instruction", "0"))
+root3 = insFld(root2, gFld("Margaret Garcia Dugan", "0"))
+root4 = insFld(root3, gFld("Deputy Superintendent of Public Instruction", "0"))
+insDoc(root4, gLnk(2,"Cheryl J. Lebo ", "0"))
+root2 = insFld(root1, gFld("Associate Superintendent for Standards and Assessment", "0"))
+insDoc(root2, gLnk(2,"Facilitating Staff Members ", "0"))
+insDoc(root1, gLnk(2,"Marilee Beach", "0"))
+root2 = insFld(root1, gFld("Education Program Specialist", "0"))
+insDoc(root2, gLnk(2,"Education Program Specialist", "0"))
+insDoc(root2, gLnk(2,"Education Program Specialist", "0"))
+insDoc(root1, gLnk(2,"Education Program Specialist", "0"))
+root2 = insFld(root1, gFld("Lacey Wieser  ", "0"))
+root3 = insFld(root2, gFld("Christie McDougall", "0"))
+insDoc(root3, gLnk(2,"Education Program Specialist", "0"))
+insDoc(root3, gLnk(2,"Education Program Specialist", "0"))
+root3 = insFld(root2, gFld("Melissa Stinson-Borg", "0"))
+insDoc(root3, gLnk(2,"Program Project Specialist I", "0"))
+insDoc(root2, gLnk(2,"Angeles Rothermel", "0"))
+root3 = insFld(root2, gFld("Administrative Assistant III", "0"))
+insDoc(root3, gLnk(2,"Administrative Assistant III", "0"))
+root4 = insFld(root3, gFld("Administrative Assistant III", "0"))
+insDoc(root4, gLnk(2,"MATHEMATICS TEAM", "4"))
+insDoc(root3, gLnk(2,"State Representation", "5"))
+insDoc(root3, gLnk(2,"Teachers who worked on the revision and articulation of the Mathematics Standard represented the schools, districts, and organizations listed below. The goal was to have representation from large and small districts, urban and rural schools, and geographic and ethnic diversity.", "5"))
+insDoc(root3, gLnk(2,"External Reviewers/Consultants", "6"))
+</script><script>initializeDocument()</script></head>
+	<body bgcolor=white  style="border-right: 2 solid #CCCCCC">
+	</body>
+	</html>
